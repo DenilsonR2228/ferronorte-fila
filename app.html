@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fila de Motoristas — Ferronorte Industrial</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeede9;
+  --txt:#1a1a1a;--txt2:#6b6b6b;--txt3:#9b9b9b;
+  --border:#e0e0dc;--border2:#c8c8c4;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-txt:#0C447C;
+  --green:#0F6E56;--green-bg:#E1F5EE;--green-txt:#085041;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-txt:#854F0B;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-txt:#791F1F;
+  --radius:8px;--radius-lg:12px;
+}
+body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--txt);min-height:100vh}
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:10}
+.topbar-logo{font-size:13px;font-weight:600;letter-spacing:0.02em}
+.topbar-logo span{color:var(--txt2);font-weight:400}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block;margin-right:6px;transition:background 0.3s}
+.sync-dot.ok{background:var(--green)}
+.sync-dot.err{background:var(--red)}
+.sync-label{font-size:11px;color:var(--txt2)}
+.tabs{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;gap:0;overflow-x:auto}
+.tab{padding:11px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt2);border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s;user-select:none}
+.tab.active{color:var(--txt);border-bottom-color:var(--txt)}
+.tab:hover:not(.active){color:var(--txt)}
+.content{max-width:760px;margin:0 auto;padding:1.5rem}
+.screen{display:none}.screen.active{display:block}
+label{font-size:12px;color:var(--txt2);display:block;margin-bottom:4px;margin-top:12px}
+input,select,textarea{width:100%;border:0.5px solid var(--border2);border-radius:var(--radius);padding:9px 11px;font-size:13px;background:var(--bg);color:var(--txt);transition:border-color 0.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+.btn-primary{background:var(--txt);color:var(--bg);border:none;border-radius:var(--radius);padding:11px 20px;font-size:13px;font-weight:500;cursor:pointer;width:100%;margin-top:16px;transition:opacity 0.15s}
+.btn-primary:hover{opacity:0.85}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+.btn-sec{background:var(--bg);color:var(--txt);border:0.5px solid var(--border2);border-radius:var(--radius);padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:background 0.1s;white-space:nowrap}
+.btn-sec:hover{background:var(--bg2)}
+.btn-danger{color:var(--red)}
+.estados-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:6px}
+@media(max-width:400px){.estados-grid{grid-template-columns:repeat(4,1fr)}}
+.estado-btn{border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 2px;font-size:11px;text-align:center;cursor:pointer;background:var(--bg);color:var(--txt2);transition:all 0.1s;user-select:none}
+.estado-btn.sel{background:var(--blue);color:var(--blue-bg);border-color:var(--blue)}
+.toggle{display:flex;gap:6px;margin-top:6px}
+.toggle-btn{border:0.5px solid var(--border2);border-radius:var(--radius);padding:7px 14px;font-size:12px;cursor:pointer;background:var(--bg);color:var(--txt2);transition:all 0.1s;user-select:none}
+.toggle-btn.sel{background:var(--txt);color:var(--bg);border-color:var(--txt)}
+.section-title{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:0.06em;margin-top:16px;margin-bottom:4px}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px}
+.contador-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.5rem}
+@media(max-width:400px){.contador-cards{grid-template-columns:repeat(2,1fr)}}
+.contador-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.contador-num{font-size:22px;font-weight:600}
+.contador-label{font-size:11px;color:var(--txt2);margin-top:2px}
+.fila-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.filtros{display:flex;gap:8px;flex-wrap:wrap}
+.filtros select{width:auto;font-size:12px;padding:6px 8px}
+.fila-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;transition:border-color 0.15s}
+.fila-card.match{border-color:var(--green);border-width:1px;background:var(--green-bg)}
+.fila-num{min-width:36px;height:36px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--txt2);flex-shrink:0;border:0.5px solid var(--border)}
+.fila-num.match-num{background:var(--green);color:#fff;border-color:var(--green)}
+.fila-body{flex:1;min-width:0}
+.fila-nome{font-weight:600;font-size:13px;margin-bottom:3px}
+.fila-meta{font-size:11px;color:var(--txt2);display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.fila-estados{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.badge-blue{background:var(--blue-bg);color:var(--blue-txt)}
+.badge-green{background:var(--green-bg);color:var(--green-txt)}
+.badge-amber{background:var(--amber-bg);color:var(--amber-txt)}
+.badge-red{background:var(--red-bg);color:var(--red-txt)}
+.badge-match{background:var(--green);color:#fff}
+.hora-txt{font-size:11px;color:var(--txt3)}
+.status-sel{font-size:11px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:4px 7px;background:var(--bg);color:var(--txt);cursor:pointer}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--txt2);font-size:13px}
+.empty-icon{font-size:32px;margin-bottom:10px}
+.alert-bar{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--amber-txt);margin-bottom:12px;display:none}
+.carga-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px}
+.carga-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.carga-nome{font-weight:600;font-size:13px}
+.match-count-green{font-size:12px;color:var(--green);font-weight:600;white-space:nowrap}
+.match-count-zero{font-size:12px;color:var(--txt3);font-weight:500}
+.carga-meta{font-size:11px;color:var(--txt2);display:flex;gap:10px;flex-wrap:wrap}
+.btn-icon{background:none;border:none;cursor:pointer;color:var(--txt2);padding:4px;font-size:16px;line-height:1;border-radius:4px}
+.btn-icon:hover{color:var(--red);background:var(--red-bg)}
+.form-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:1.5rem}
+.actions-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* SENHA MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg);border-radius:var(--radius-lg);padding:2rem 1.5rem;max-width:320px;width:92%;text-align:center;border:0.5px solid var(--border2)}
+.modal-empresa{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
+.modal-titulo{font-size:12px;color:var(--txt2);margin-bottom:0}
+.modal-senha{font-size:72px;font-weight:700;line-height:1;color:var(--txt);margin:16px 0}
+.modal-info{font-size:12px;color:var(--txt2);line-height:1.7;margin-bottom:1.5rem;text-align:left;background:var(--bg2);border-radius:var(--radius);padding:10px 12px}
+.modal-info strong{color:var(--txt);font-size:13px}
+.modal-btns{display:flex;gap:8px;justify-content:center}
+
+/* PRINT */
+@media print{
+  body *{visibility:hidden}
+  .modal-overlay,.modal-overlay *{visibility:visible}
+  .modal-overlay{position:fixed;inset:0;background:white;display:flex!important}
+  .modal-box{border:2px solid #000;box-shadow:none}
+  .modal-btns,.no-print-modal{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Ferronorte Industrial <span>/ Fila de Motoristas</span></div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span class="sync-dot" id="sync-dot"></span>
+    <span class="sync-label" id="sync-label">Conectando...</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('portaria')">&#x1F6AA; Portaria</div>
+  <div class="tab" onclick="switchTab('fila')">&#x1F4CB; Fila</div>
+  <div class="tab" onclick="switchTab('cargas')">&#x1F4E6; Cargas</div>
+</div>
+
+<div class="content">
+
+<!-- PORTARIA -->
+<div id="screen-portaria" class="screen active">
+  <div class="form-card">
+    <div class="row2">
+      <div><label>Nome completo</label><input type="text" id="p-nome" placeholder="Nome do motorista" autocomplete="off"></div>
+      <div><label>Telefone</label><input type="text" id="p-tel" placeholder="(86) 9 0000-0000" autocomplete="off"></div>
+    </div>
+    <div class="row2">
+      <div><label>E-mail</label><input type="email" id="p-email" placeholder="email@exemplo.com" autocomplete="off"></div>
+      <div><label>Placa do veículo</label><input type="text" id="p-placa" placeholder="ABC-1234" autocomplete="off" style="text-transform:uppercase"></div>
+    </div>
+    <div class="row2">
+      <div>
+        <label>Tipo de veículo</label>
+        <select id="p-veiculo">
+          <option value="">Selecionar...</option>
+          <option>Truck (14t)</option>
+          <option>Carreta LS (32t)</option>
+          <option>Bitrem (40t)</option>
+          <option>Rodotrem (50t)</option>
+          <option>VUC</option>
+          <option>Toco</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label>Tipo de frete</label>
+        <div class="toggle">
+          <button class="toggle-btn sel" id="tf-freteiro" onclick="selFrete('Freteiro')">Freteiro</button>
+          <button class="toggle-btn" id="tf-transportadora" onclick="selFrete('Transportadora')">Transportadora</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--txt2)">Usa rastreador?</span>
+      <div class="toggle" style="margin-top:0">
+        <button class="toggle-btn sel" id="r-sim" onclick="selRastr('Sim')">Sim</button>
+        <button class="toggle-btn" id="r-nao" onclick="selRastr('Não')">Não</button>
+      </div>
+    </div>
+    <div class="section-title">Estados de interesse</div>
+    <div class="estados-grid" id="estados-grid"></div>
+    <label style="margin-top:14px">Cidades de interesse <span style="color:var(--txt3);font-weight:400">(opcional)</span></label>
+    <textarea id="p-cidades" rows="2" placeholder="Ex: São Luís, Fortaleza, Brasília..."></textarea>
+    <button class="btn-primary" id="btn-registrar" onclick="registrar()">Registrar na fila</button>
+  </div>
+</div>
+
+<!-- FILA -->
+<div id="screen-fila" class="screen">
+  <div class="contador-cards" id="contador-cards">
+    <div class="contador-card"><div class="contador-num">—</div><div class="contador-label">Total hoje</div></div>
+    <div class="contador-card"><div class="contador-num" style="color:var(--amber)">—</div><div class="contador-label">Aguardando</div></div>
+    <div class="contador-card"><div class="contador-num" style="color:var(--green)">—</div><div class="contador-label">Contratados</div></div>
+    <div class="contador-card"><div class="contador-num" style="color:var(--red)">—</div><div class="contador-label">Desistentes</div></div>
+  </div>
+  <div class="fila-header">
+    <span style="font-size:13px;font-weight:600">Fila de espera</span>
+    <div class="actions-row">
+      <div class="filtros">
+        <select id="f-estado" onchange="renderFila()"><option value="">Todos os estados</option></select>
+        <select id="f-veiculo" onchange="renderFila()">
+          <option value="">Todos os veículos</option>
+          <option>Truck (14t)</option><option>Carreta LS (32t)</option><option>Bitrem (40t)</option><option>Rodotrem (50t)</option>
+        </select>
+        <select id="f-status" onchange="renderFila()">
+          <option value="">Todos</option><option>Aguardando</option><option>Contratado</option><option>Desistente</option>
+        </select>
+      </div>
+      <button class="btn-sec" onclick="exportCSV()">&#x2B73; CSV</button>
+      <button class="btn-sec btn-danger" onclick="limparDia()">&#x1F5D1; Limpar dia</button>
+    </div>
+  </div>
+  <div id="fila-lista"><div class="empty"><div class="empty-icon">&#x1F69B;</div>Nenhum motorista na fila</div></div>
+</div>
+
+<!-- CARGAS -->
+<div id="screen-cargas" class="screen">
+  <div class="form-card">
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px">Cadastrar carga disponível</div>
+    <div class="row2">
+      <div><label>Descrição</label><input type="text" id="c-desc" placeholder="Ex: Carga Nordeste – MA/PI"></div>
+      <div>
+        <label>Veículo necessário</label>
+        <select id="c-veiculo">
+          <option value="">Qualquer veículo</option>
+          <option>Truck (14t)</option><option>Carreta LS (32t)</option><option>Bitrem (40t)</option><option>Rodotrem (50t)</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-title">Estados desta carga</div>
+    <div class="estados-grid" id="estados-carga-grid"></div>
+    <button class="btn-primary" onclick="addCarga()" style="margin-top:12px">Adicionar carga</button>
+  </div>
+  <div id="cargas-lista"><div class="empty"><div class="empty-icon">&#x1F4E6;</div>Nenhuma carga cadastrada</div></div>
+</div>
+
+</div><!-- /content -->
+
+<!-- MODAL SENHA -->
+<div class="modal-overlay" id="modal-senha">
+  <div class="modal-box">
+    <div class="modal-empresa">Ferronorte Industrial</div>
+    <div class="modal-titulo">Senha de espera</div>
+    <div class="modal-senha" id="modal-num">001</div>
+    <div class="modal-info" id="modal-info"></div>
+    <div class="modal-btns no-print-modal">
+      <button class="btn-sec" onclick="window.print()">&#x1F5A8; Imprimir</button>
+      <button class="btn-primary" style="width:auto;margin-top:0" onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ESTADOS=['MA','GO','DF','PI','AL','PE','TO','BA','SE','PA','SP','MG','CE','RN','PB','AM','RO','MT','MS','PR','SC','RS','RR','AC','ES','RJ'];
+let selEstados=[];
+let selEstadosCarga=[];
+let tipoFrete='Freteiro';
+let rastreador='Sim';
+let dados={fila:[],cargas:[],ultima_atualizacao:0};
+let pollAbort=null;
+let abaAtiva='portaria';
+
+// ---- POLL / SYNC ----
+function setSyncStatus(ok,txt){
+  document.getElementById('sync-dot').className='sync-dot'+(ok===true?' ok':ok===false?' err':'');
+  document.getElementById('sync-label').textContent=txt;
+}
+
+async function apiGet(path){
+  const r=await fetch(path);
+  if(!r.ok)throw new Error(r.status);
+  return r.json();
+}
+async function apiPost(path,body){
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(r.status);
+  return r.json();
+}
+
+async function carregarInicial(){
+  try{
+    const d=await apiGet('/api/dados');
+    aplicarDados(d);
+    setSyncStatus(true,'Conectado');
+    iniciarPoll();
+  }catch(e){
+    setSyncStatus(false,'Sem conexão com servidor');
+    setTimeout(carregarInicial,3000);
+  }
+}
+
+function aplicarDados(d){
+  dados=d;
+  if(abaAtiva==='fila'){renderContadores();renderFila();populateFilterEstados();}
+  if(abaAtiva==='cargas')renderCargas();
+}
+
+async function iniciarPoll(){
+  while(true){
+    try{
+      const d=await apiGet('/api/poll?since='+dados.ultima_atualizacao);
+      if(!d.sem_mudanca){aplicarDados(d);}
+      setSyncStatus(true,'Conectado');
+    }catch(e){
+      setSyncStatus(false,'Reconectando...');
+      await new Promise(r=>setTimeout(r,3000));
+    }
+  }
+}
+
+// ---- UI ----
+function switchTab(t){
+  abaAtiva=t;
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['portaria','fila','cargas'][i]===t));
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('screen-'+t).classList.add('active');
+  if(t==='fila'){renderContadores();renderFila();populateFilterEstados();}
+  if(t==='cargas')renderCargas();
+}
+
+function buildGrid(containerId,selArr,onToggle){
+  const g=document.getElementById(containerId);
+  g.innerHTML='';
+  ESTADOS.forEach(e=>{
+    const b=document.createElement('button');
+    b.className='estado-btn'+(selArr.includes(e)?' sel':'');
+    b.textContent=e;
+    b.onclick=()=>{
+      if(selArr.includes(e))selArr.splice(selArr.indexOf(e),1);
+      else selArr.push(e);
+      buildGrid(containerId,selArr,onToggle);
+    };
+    g.appendChild(b);
+  });
+}
+buildGrid('estados-grid',selEstados,null);
+buildGrid('estados-carga-grid',selEstadosCarga,null);
+
+function selFrete(v){tipoFrete=v;document.getElementById('tf-freteiro').classList.toggle('sel',v==='Freteiro');document.getElementById('tf-transportadora').classList.toggle('sel',v==='Transportadora');}
+function selRastr(v){rastreador=v;document.getElementById('r-sim').classList.toggle('sel',v==='Sim');document.getElementById('r-nao').classList.toggle('sel',v==='Não');}
+
+function proximaSenha(){
+  const hoje=new Date().toDateString();
+  const k='fn_senha_'+hoje;
+  let n=parseInt(localStorage.getItem(k)||'0')+1;
+  localStorage.setItem(k,n);
+  return String(n).padStart(3,'0');
+}
+
+async function registrar(){
+  const nome=document.getElementById('p-nome').value.trim();
+  const tel=document.getElementById('p-tel').value.trim();
+  const email=document.getElementById('p-email').value.trim();
+  const placa=document.getElementById('p-placa').value.trim().toUpperCase();
+  const veiculo=document.getElementById('p-veiculo').value;
+  const cidades=document.getElementById('p-cidades').value.trim();
+  if(!nome||!placa||!veiculo||selEstados.length===0){alert('Preencha: nome, placa, tipo de veículo e pelo menos um estado de interesse.');return;}
+  const btn=document.getElementById('btn-registrar');
+  btn.disabled=true;btn.textContent='Registrando...';
+  const senha=proximaSenha();
+  const motorista={id:Date.now(),senha,nome,tel,email,placa,veiculo,tipoFrete,rastreador,estados:[...selEstados],cidades,hora:new Date().toISOString(),status:'Aguardando'};
+  try{
+    await apiPost('/api/motorista',motorista);
+    exibirSenha(motorista);
+    document.getElementById('p-nome').value='';document.getElementById('p-tel').value='';document.getElementById('p-email').value='';document.getElementById('p-placa').value='';document.getElementById('p-veiculo').value='';document.getElementById('p-cidades').value='';
+    selEstados=[];tipoFrete='Freteiro';rastreador='Sim';selFrete('Freteiro');selRastr('Sim');buildGrid('estados-grid',selEstados,null);
+  }catch(e){alert('Erro ao registrar. Verifique a conexão com o servidor.');}
+  btn.disabled=false;btn.textContent='Registrar na fila';
+}
+
+function exibirSenha(m){
+  document.getElementById('modal-num').textContent=m.senha;
+  const d=new Date(m.hora);
+  const hora=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const data=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('modal-info').innerHTML=`<strong>${m.nome}</strong><br>${m.veiculo} &nbsp;·&nbsp; ${m.placa}<br>Chegada: ${hora} &nbsp;·&nbsp; ${data}<br>Estados: ${m.estados.join(', ')}`;
+  document.getElementById('modal-senha').classList.add('open');
+}
+function fecharModal(){document.getElementById('modal-senha').classList.remove('open');}
+
+function fmt(iso){
+  const d=new Date(iso);
+  return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+}
+
+function populateFilterEstados(){
+  const sel=document.getElementById('f-estado');
+  const cur=sel.value;
+  const all=new Set();
+  dados.fila.forEach(m=>m.estados.forEach(e=>all.add(e)));
+  sel.innerHTML='<option value="">Todos os estados</option>';
+  [...all].sort().forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);});
+  sel.value=cur;
+}
+
+function renderContadores(){
+  const f=dados.fila;
+  document.getElementById('contador-cards').innerHTML=`
+    <div class="contador-card"><div class="contador-num">${f.length}</div><div class="contador-label">Total hoje</div></div>
+    <div class="contador-card"><div class="contador-num" style="color:var(--amber)">${f.filter(m=>m.status==='Aguardando').length}</div><div class="contador-label">Aguardando</div></div>
+    <div class="contador-card"><div class="contador-num" style="color:var(--green)">${f.filter(m=>m.status==='Contratado').length}</div><div class="contador-label">Contratados</div></div>
+    <div class="contador-card"><div class="contador-num" style="color:var(--red)">${f.filter(m=>m.status==='Desistente').length}</div><div class="contador-label">Desistentes</div></div>
+  `;
+}
+
+function motoristaBateCarga(m){
+  return dados.cargas.some(c=>{
+    const eOk=c.estados.some(e=>m.estados.includes(e));
+    const vOk=!c.veiculo||c.veiculo===m.veiculo;
+    return eOk&&vOk;
+  });
+}
+function cargasDoMotorista(m){
+  return dados.cargas.filter(c=>c.estados.some(e=>m.estados.includes(e))&&(!c.veiculo||c.veiculo===m.veiculo));
+}
+
+function renderFila(){
+  renderContadores();
+  const fE=document.getElementById('f-estado').value;
+  const fV=document.getElementById('f-veiculo').value;
+  const fS=document.getElementById('f-status').value;
+  let lista=[...dados.fila].sort((a,b)=>new Date(a.hora)-new Date(b.hora));
+  if(fE)lista=lista.filter(m=>m.estados.includes(fE));
+  if(fV)lista=lista.filter(m=>m.veiculo===fV);
+  if(fS)lista=lista.filter(m=>m.status===fS);
+  const el=document.getElementById('fila-lista');
+  if(lista.length===0){el.innerHTML='<div class="empty"><div class="empty-icon">&#x1F69B;</div>Nenhum motorista na fila</div>';return;}
+  el.innerHTML=lista.map((m,i)=>{
+    const bate=motoristaBateCarga(m);
+    const statusCls=m.status==='Aguardando'?'badge-amber':m.status==='Contratado'?'badge-green':'badge-red';
+    const cargasM=cargasDoMotorista(m).map(c=>c.desc).join(', ');
+    return `<div class="fila-card${bate?' match':''}">
+      <div class="fila-num${bate?' match-num':''}">${m.senha||String(i+1).padStart(3,'0')}</div>
+      <div class="fila-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;flex-wrap:wrap">
+          <span class="fila-nome">${m.nome}</span>
+          <span class="hora-txt">${fmt(m.hora)}</span>
+        </div>
+        <div class="fila-meta">
+          <span>&#x1F69A; ${m.veiculo}</span>
+          <span>&#x1F4CB; ${m.placa}</span>
+          <span>${m.rastreador==='Sim'?'&#x1F4CD; Rastreador':'&#x274C; Sem rastreador'}</span>
+          <span>&#x1F4B0; ${m.tipoFrete}</span>
+          ${m.tel?`<span>&#x1F4DE; ${m.tel}</span>`:''}
+          ${m.email?`<span>&#x2709; ${m.email}</span>`:''}
+        </div>
+        <div class="fila-estados">${m.estados.map(e=>`<span class="badge badge-blue">${e}</span>`).join('')}${m.cidades?`<span style="font-size:11px;color:var(--txt3);align-self:center;margin-left:2px">${m.cidades}</span>`:''}</div>
+        ${bate?`<div style="margin-bottom:6px"><span class="badge badge-match">&#x2714; Bate com: ${cargasM}</span></div>`:''}
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="badge ${statusCls}">${m.status}</span>
+          <select class="status-sel" onchange="updStatus(${m.id},this.value)">
+            <option${m.status==='Aguardando'?' selected':''}>Aguardando</option>
+            <option${m.status==='Contratado'?' selected':''}>Contratado</option>
+            <option${m.status==='Desistente'?' selected':''}>Desistente</option>
+          </select>
+          <button class="btn-sec" style="font-size:11px;padding:4px 10px" onclick="reimprimirSenha(${m.id})">&#x1F5A8; Senha</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updStatus(id,val){
+  try{await apiPost('/api/status',{id,status:val});}
+  catch(e){alert('Erro ao atualizar status.');}
+}
+
+function reimprimirSenha(id){
+  const m=dados.fila.find(x=>x.id===id);
+  if(m)exibirSenha(m);
+}
+
+function exportCSV(){
+  if(dados.fila.length===0){alert('Nenhum motorista na fila.');return;}
+  const h=['Senha','Nome','Telefone','Email','Placa','Veículo','Tipo Frete','Rastreador','Estados','Cidades','Chegada','Status'];
+  const rows=dados.fila.map(m=>[m.senha,m.nome,m.tel,m.email,m.placa,m.veiculo,m.tipoFrete,m.rastreador,m.estados.join('/'),m.cidades,new Date(m.hora).toLocaleString('pt-BR'),m.status]);
+  const csv=[h,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fila_motoristas_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.csv';a.click();
+}
+
+async function limparDia(){
+  if(!confirm('Limpar toda a fila de hoje? Esta ação não pode ser desfeita.'))return;
+  try{await apiPost('/api/limpar',{});}
+  catch(e){alert('Erro ao limpar fila.');}
+}
+
+async function addCarga(){
+  const desc=document.getElementById('c-desc').value.trim();
+  const veiculo=document.getElementById('c-veiculo').value;
+  if(!desc||selEstadosCarga.length===0){alert('Preencha a descrição e pelo menos um estado.');return;}
+  try{
+    await apiPost('/api/carga',{id:Date.now(),desc,veiculo,estados:[...selEstadosCarga]});
+    document.getElementById('c-desc').value='';document.getElementById('c-veiculo').value='';
+    selEstadosCarga.length=0;buildGrid('estados-carga-grid',selEstadosCarga,null);
+  }catch(e){alert('Erro ao adicionar carga.');}
+}
+
+async function removerCarga(id){
+  try{await apiPost('/api/remover_carga',{id});}
+  catch(e){alert('Erro ao remover carga.');}
+}
+
+function motoristasParaCarga(c){
+  return dados.fila.filter(m=>m.status==='Aguardando'&&c.estados.some(e=>m.estados.includes(e))&&(!c.veiculo||c.veiculo===m.veiculo)).length;
+}
+
+function renderCargas(){
+  const el=document.getElementById('cargas-lista');
+  if(!dados.cargas||dados.cargas.length===0){el.innerHTML='<div class="empty"><div class="empty-icon">&#x1F4E6;</div>Nenhuma carga cadastrada</div>';return;}
+  el.innerHTML=dados.cargas.map(c=>{
+    const qtd=motoristasParaCarga(c);
+    return `<div class="carga-card">
+      <div class="carga-header">
+        <span class="carga-nome">${c.desc}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="${qtd>0?'match-count-green':'match-count-zero'}">${qtd} motorista${qtd!==1?'s':''} disponível${qtd!==1?'is':''}</span>
+          <button class="btn-icon" onclick="removerCarga(${c.id})" title="Remover">&#x1F5D1;</button>
+        </div>
+      </div>
+      <div class="carga-meta">
+        <span>${c.veiculo||'Qualquer veículo'}</span>
+        <span>Estados: ${c.estados.join(', ')}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+carregarInicial();
+</script>
+</body>
+</html>
