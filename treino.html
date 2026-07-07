@@ -55,10 +55,27 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .ex-card.checked{background:var(--green-bg);border-color:var(--green)}
 .ex-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;transition:all .15s;user-select:none}
 .ex-check.on{background:var(--green);border-color:var(--green)}
+.ex-icon{width:46px;height:46px;flex-shrink:0;background:var(--bg2);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;padding:5px;cursor:pointer}
+.ex-icon-svg{width:100%;height:100%;overflow:visible}
+.ex-icon-svg .ic-line{fill:none;stroke:var(--txt);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.ex-icon-svg .ic-head{fill:none;stroke:var(--txt);stroke-width:4}
+.ex-icon-svg .ic-floor{stroke:var(--border2);stroke-width:2.5;stroke-linecap:round}
+.ex-icon-svg .ic-accent{stroke:var(--blue);stroke-width:4;fill:none;stroke-linecap:round}
+.ex-icon-svg .ic-dot{fill:var(--blue);stroke:none}
+.ex-card.checked .ex-icon{background:var(--green-bg)}
+.ex-card.checked .ex-icon-svg .ic-line,.ex-card.checked .ex-icon-svg .ic-head{stroke:var(--green-txt)}
+.ex-card.checked .ex-icon-svg .ic-dot{fill:var(--green-txt)}
 .ex-body{flex:1;min-width:0}
 .ex-name{font-weight:600;font-size:13px}
 .ex-meta{font-size:11.5px;color:var(--txt2);margin-top:2px}
 .ex-card.checked .ex-name{text-decoration:line-through;color:var(--txt2)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;align-items:center;justify-content:center;padding:1.5rem}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg);border-radius:var(--radius-lg);padding:20px;max-width:280px;width:100%;text-align:center}
+.modal-box .ex-icon-svg{width:140px;height:140px}
+.modal-box .modal-name{font-weight:600;font-size:15px;margin-top:8px}
+.modal-box .modal-meta{font-size:12px;color:var(--txt2);margin-top:4px}
 
 .run-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:8px}
 .run-card .ex-meta{margin-top:6px;line-height:1.5}
@@ -102,6 +119,10 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   </div>
 </div>
 
+<div class="modal-overlay" id="modalOverlay" onclick="fecharIlustracao(event)">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
 <script>
 // ---------- Plano semanal ----------
 // 5x academia (força + pernas em foco), 4x corrida.
@@ -110,20 +131,20 @@ const PLANO = [
   { id:"seg", nome:"Segunda", tipo:["academia"], titulo:"Pernas A — Quadríceps / Força",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Agachamento livre", m:"4x6-8, carga alta"},
-        {n:"Leg press 45°", m:"4x10"},
-        {n:"Cadeira extensora", m:"3x12"},
-        {n:"Afundo (passada)", m:"3x10 cada perna"},
-        {n:"Panturrilha em pé", m:"4x15"},
+        {n:"Agachamento livre", m:"4x6-8, carga alta", icon:"squat"},
+        {n:"Leg press 45°", m:"4x10", icon:"legpress"},
+        {n:"Cadeira extensora", m:"3x12", icon:"legext"},
+        {n:"Afundo (passada)", m:"3x10 cada perna", icon:"lunge"},
+        {n:"Panturrilha em pé", m:"4x15", icon:"calfstand"},
       ]}
     ]},
   { id:"ter", nome:"Terça", tipo:["academia","corrida"], titulo:"Superior Empurrar (Push) + Corrida leve",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Supino reto", m:"4x8"},
-        {n:"Desenvolvimento militar", m:"3x10"},
-        {n:"Tríceps corda", m:"3x12"},
-        {n:"Elevação lateral", m:"3x15"},
+        {n:"Supino reto", m:"4x8", icon:"benchpress"},
+        {n:"Desenvolvimento militar", m:"3x10", icon:"ohp"},
+        {n:"Tríceps corda", m:"3x12", icon:"tricepspush"},
+        {n:"Elevação lateral", m:"3x15", icon:"lateralraise"},
       ]},
       { titulo:"Corrida", corrida:{tipo:"Regenerativa / leve", detalhe:"30 min em ritmo de conversa (consegue falar frases inteiras). Objetivo: recuperação ativa, não desgastar as pernas para o treino de quinta."} }
     ]},
@@ -134,30 +155,30 @@ const PLANO = [
   { id:"qui", nome:"Quinta", tipo:["academia"], titulo:"Pernas B — Posterior / Glúteos",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Levantamento terra romeno", m:"4x8"},
-        {n:"Cadeira flexora", m:"3x12"},
-        {n:"Elevação pélvica (hip thrust)", m:"4x10"},
-        {n:"Stiff unilateral", m:"3x10 cada perna"},
-        {n:"Panturrilha sentado", m:"4x15"},
+        {n:"Levantamento terra romeno", m:"4x8", icon:"rdl"},
+        {n:"Cadeira flexora", m:"3x12", icon:"legcurl"},
+        {n:"Elevação pélvica (hip thrust)", m:"4x10", icon:"hipthrust"},
+        {n:"Stiff unilateral", m:"3x10 cada perna", icon:"singlelegrdl"},
+        {n:"Panturrilha sentado", m:"4x15", icon:"calfseated"},
       ]}
     ]},
   { id:"sex", nome:"Sexta", tipo:["academia"], titulo:"Superior Puxar (Pull) + Core",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Puxada frente", m:"4x8"},
-        {n:"Remada curvada", m:"4x10"},
-        {n:"Rosca direta", m:"3x12"},
-        {n:"Prancha", m:"3x45s"},
-        {n:"Abdominal infra", m:"3x15"},
+        {n:"Puxada frente", m:"4x8", icon:"latpulldown"},
+        {n:"Remada curvada", m:"4x10", icon:"bentrow"},
+        {n:"Rosca direta", m:"3x12", icon:"bicepcurl"},
+        {n:"Prancha", m:"3x45s", icon:"plank"},
+        {n:"Abdominal infra", m:"3x15", icon:"legraise"},
       ]}
     ]},
   { id:"sab", nome:"Sábado", tipo:["academia","corrida"], titulo:"Full Body Funcional + Corrida leve",
     blocos:[
       { titulo:"Musculação (circuito, 3 voltas)", exercicios:[
-        {n:"Kettlebell swing", m:"15 reps"},
-        {n:"Burpee", m:"12 reps"},
-        {n:"Mountain climber", m:"20 reps"},
-        {n:"Prancha lateral", m:"30s cada lado"},
+        {n:"Kettlebell swing", m:"15 reps", icon:"kbswing"},
+        {n:"Burpee", m:"12 reps", icon:"burpee"},
+        {n:"Mountain climber", m:"20 reps", icon:"mountainclimber"},
+        {n:"Prancha lateral", m:"30s cada lado", icon:"sideplank"},
       ]},
       { titulo:"Corrida", corrida:{tipo:"Leve / moderada", detalhe:"25-30 min em ritmo moderado, sem forçar. Serve de complemento ao circuito funcional."} }
     ]},
@@ -166,6 +187,224 @@ const PLANO = [
       { titulo:"Corrida", corrida:{tipo:"Longão", detalhe:"50-70 min em ritmo confortável e constante. Foco em resistência aeróbica, não em velocidade. Hidrate-se bem antes."} }
     ]},
 ];
+
+// ---------- Ilustrações (pictogramas SVG, sem imagens externas) ----------
+const ICONS = {
+  squat: `
+    <line class="ic-floor" x1="10" y1="58" x2="54" y2="58"/>
+    <circle class="ic-head" cx="31" cy="10" r="5"/>
+    <polyline class="ic-line" points="31,15 30,34 25,47 29,58"/>
+    <polyline class="ic-line" points="30,34 37,46 34,58"/>
+    <polyline class="ic-line" points="31,17 21,15"/>
+    <line class="ic-accent" x1="14" y1="15" x2="24" y2="15"/>
+  `,
+  legpress: `
+    <line class="ic-floor" x1="8" y1="58" x2="56" y2="58"/>
+    <line class="ic-accent" x1="52" y1="14" x2="52" y2="40"/>
+    <circle class="ic-head" cx="18" cy="20" r="5"/>
+    <polyline class="ic-line" points="21,24 34,34"/>
+    <polyline class="ic-line" points="34,34 46,30 52,26"/>
+    <polyline class="ic-line" points="21,24 26,32"/>
+  `,
+  legext: `
+    <line class="ic-accent" x1="19" y1="16" x2="19" y2="42"/>
+    <circle class="ic-head" cx="25" cy="12" r="5"/>
+    <polyline class="ic-line" points="25,17 25,34"/>
+    <polyline class="ic-line" points="25,34 40,34"/>
+    <polyline class="ic-line" points="40,34 51,24"/>
+    <polyline class="ic-line" points="25,18 19,28"/>
+  `,
+  lunge: `
+    <line class="ic-floor" x1="10" y1="58" x2="50" y2="58"/>
+    <circle class="ic-head" cx="30" cy="10" r="5"/>
+    <polyline class="ic-line" points="30,15 30,33"/>
+    <polyline class="ic-line" points="30,33 22,44 22,58"/>
+    <polyline class="ic-line" points="30,33 40,50 46,58"/>
+    <polyline class="ic-line" points="30,17 25,29"/>
+    <polyline class="ic-line" points="30,17 35,29"/>
+  `,
+  calfstand: `
+    <line class="ic-floor" x1="12" y1="58" x2="48" y2="58"/>
+    <circle class="ic-head" cx="31" cy="10" r="5"/>
+    <polyline class="ic-line" points="31,15 31,34 31,52"/>
+    <polyline class="ic-line" points="31,52 39,58"/>
+    <polyline class="ic-line" points="31,17 27,29"/>
+  `,
+  benchpress: `
+    <rect class="ic-line" x="12" y="40" width="38" height="6"/>
+    <circle class="ic-head" cx="20" cy="38" r="5"/>
+    <polyline class="ic-line" points="25,40 42,40"/>
+    <polyline class="ic-line" points="42,40 46,50 41,58"/>
+    <polyline class="ic-line" points="30,40 29,20"/>
+    <line class="ic-accent" x1="16" y1="20" x2="42" y2="20"/>
+  `,
+  ohp: `
+    <line class="ic-floor" x1="12" y1="58" x2="50" y2="58"/>
+    <circle class="ic-head" cx="31" cy="10" r="5"/>
+    <polyline class="ic-line" points="31,15 31,34"/>
+    <polyline class="ic-line" points="31,34 28,58"/>
+    <polyline class="ic-line" points="31,34 35,58"/>
+    <polyline class="ic-line" points="31,17 24,6"/>
+    <polyline class="ic-line" points="31,17 38,6"/>
+    <line class="ic-accent" x1="20" y1="6" x2="42" y2="6"/>
+  `,
+  tricepspush: `
+    <line class="ic-floor" x1="12" y1="58" x2="50" y2="58"/>
+    <circle class="ic-head" cx="31" cy="10" r="5"/>
+    <polyline class="ic-line" points="31,15 31,34"/>
+    <polyline class="ic-line" points="31,34 28,58"/>
+    <polyline class="ic-line" points="31,34 35,58"/>
+    <polyline class="ic-line" points="31,18 34,26 32,36"/>
+    <line class="ic-accent" x1="32" y1="6" x2="32" y2="36"/>
+  `,
+  lateralraise: `
+    <line class="ic-floor" x1="12" y1="58" x2="50" y2="58"/>
+    <circle class="ic-head" cx="31" cy="9" r="5"/>
+    <polyline class="ic-line" points="31,14 31,34"/>
+    <polyline class="ic-line" points="31,34 25,58"/>
+    <polyline class="ic-line" points="31,34 37,58"/>
+    <polyline class="ic-line" points="31,18 16,14"/>
+    <polyline class="ic-line" points="31,18 46,14"/>
+  `,
+  rdl: `
+    <line class="ic-floor" x1="6" y1="58" x2="46" y2="58"/>
+    <circle class="ic-head" cx="18" cy="16" r="5"/>
+    <polyline class="ic-line" points="22,20 30,30"/>
+    <polyline class="ic-line" points="30,30 28,58"/>
+    <polyline class="ic-line" points="22,20 18,44"/>
+    <line class="ic-accent" x1="10" y1="44" x2="26" y2="44"/>
+  `,
+  legcurl: `
+    <line class="ic-floor" x1="10" y1="36" x2="48" y2="36"/>
+    <circle class="ic-head" cx="14" cy="32" r="5"/>
+    <polyline class="ic-line" points="18,34 38,34"/>
+    <polyline class="ic-line" points="38,34 44,36"/>
+    <polyline class="ic-line" points="44,36 40,24"/>
+    <circle class="ic-dot" cx="40" cy="24" r="2.5"/>
+  `,
+  hipthrust: `
+    <line class="ic-accent" x1="10" y1="30" x2="10" y2="42"/>
+    <circle class="ic-head" cx="9" cy="27" r="5"/>
+    <polyline class="ic-line" points="13,30 33,27"/>
+    <polyline class="ic-line" points="33,27 41,45 33,58"/>
+    <line class="ic-floor" x1="6" y1="58" x2="50" y2="58"/>
+  `,
+  singlelegrdl: `
+    <line class="ic-floor" x1="6" y1="58" x2="52" y2="58"/>
+    <circle class="ic-head" cx="17" cy="14" r="5"/>
+    <polyline class="ic-line" points="20,18 30,30"/>
+    <polyline class="ic-line" points="30,30 28,58"/>
+    <polyline class="ic-line" points="30,30 43,25 51,19"/>
+    <polyline class="ic-line" points="20,18 16,40"/>
+  `,
+  calfseated: `
+    <line class="ic-floor" x1="10" y1="50" x2="46" y2="50"/>
+    <line class="ic-line" x1="18" y1="36" x2="30" y2="36"/>
+    <circle class="ic-head" cx="24" cy="18" r="5"/>
+    <polyline class="ic-line" points="24,23 24,36"/>
+    <polyline class="ic-line" points="24,36 37,36"/>
+    <polyline class="ic-line" points="37,36 41,50"/>
+    <line class="ic-accent" x1="32" y1="28" x2="40" y2="34"/>
+  `,
+  latpulldown: `
+    <line class="ic-floor" x1="10" y1="58" x2="40" y2="58"/>
+    <line class="ic-line" x1="20" y1="38" x2="32" y2="38"/>
+    <circle class="ic-head" cx="26" cy="20" r="5"/>
+    <polyline class="ic-line" points="26,25 26,38"/>
+    <polyline class="ic-line" points="26,38 20,50 26,58"/>
+    <polyline class="ic-line" points="26,22 18,10"/>
+    <polyline class="ic-line" points="26,22 34,10"/>
+    <line class="ic-accent" x1="14" y1="10" x2="38" y2="10"/>
+  `,
+  bentrow: `
+    <line class="ic-floor" x1="8" y1="58" x2="46" y2="58"/>
+    <circle class="ic-head" cx="12" cy="20" r="5"/>
+    <polyline class="ic-line" points="16,23 30,29"/>
+    <polyline class="ic-line" points="30,29 29,44 29,58"/>
+    <polyline class="ic-line" points="16,23 20,30 16,35"/>
+    <circle class="ic-dot" cx="16" cy="35" r="2.5"/>
+  `,
+  bicepcurl: `
+    <line class="ic-floor" x1="12" y1="58" x2="50" y2="58"/>
+    <circle class="ic-head" cx="31" cy="10" r="5"/>
+    <polyline class="ic-line" points="31,15 31,34"/>
+    <polyline class="ic-line" points="31,34 28,58"/>
+    <polyline class="ic-line" points="31,34 35,58"/>
+    <polyline class="ic-line" points="31,18 31,28 26,20"/>
+    <circle class="ic-dot" cx="26" cy="20" r="2.5"/>
+  `,
+  plank: `
+    <line class="ic-floor" x1="8" y1="44" x2="54" y2="44"/>
+    <circle class="ic-head" cx="14" cy="30" r="5"/>
+    <polyline class="ic-line" points="19,32 50,38"/>
+    <polyline class="ic-line" points="19,32 19,44"/>
+    <polyline class="ic-line" points="50,38 50,44"/>
+  `,
+  legraise: `
+    <line class="ic-floor" x1="8" y1="44" x2="34" y2="44"/>
+    <circle class="ic-head" cx="12" cy="40" r="5"/>
+    <polyline class="ic-line" points="17,44 32,44"/>
+    <polyline class="ic-line" points="32,44 40,28 46,14"/>
+    <polyline class="ic-line" points="20,44 20,50"/>
+  `,
+  kbswing: `
+    <line class="ic-floor" x1="6" y1="58" x2="46" y2="58"/>
+    <circle class="ic-head" cx="16" cy="16" r="5"/>
+    <polyline class="ic-line" points="20,20 29,32"/>
+    <polyline class="ic-line" points="29,32 28,46 27,58"/>
+    <polyline class="ic-line" points="20,20 11,26"/>
+    <circle class="ic-dot" cx="8" cy="28" r="4"/>
+  `,
+  burpee: `
+    <line class="ic-floor" x1="12" y1="58" x2="50" y2="58"/>
+    <circle class="ic-head" cx="31" cy="8" r="5"/>
+    <polyline class="ic-line" points="31,13 30,34"/>
+    <polyline class="ic-line" points="30,34 29,58"/>
+    <polyline class="ic-line" points="31,15 24,4"/>
+    <polyline class="ic-line" points="31,15 38,4"/>
+  `,
+  mountainclimber: `
+    <line class="ic-floor" x1="8" y1="44" x2="54" y2="44"/>
+    <circle class="ic-head" cx="14" cy="30" r="5"/>
+    <polyline class="ic-line" points="19,32 48,35"/>
+    <polyline class="ic-line" points="19,32 19,44"/>
+    <polyline class="ic-line" points="48,35 36,32 30,34"/>
+  `,
+  sideplank: `
+    <line class="ic-floor" x1="8" y1="46" x2="54" y2="46"/>
+    <circle class="ic-head" cx="14" cy="28" r="5"/>
+    <polyline class="ic-line" points="19,30 50,46"/>
+    <polyline class="ic-line" points="19,30 19,40"/>
+    <polyline class="ic-line" points="19,30 14,18"/>
+  `,
+  run: `
+    <line class="ic-floor" x1="10" y1="55" x2="50" y2="55"/>
+    <circle class="ic-head" cx="24" cy="10" r="5"/>
+    <polyline class="ic-line" points="24,15 30,32"/>
+    <polyline class="ic-line" points="30,32 38,30 44,24"/>
+    <polyline class="ic-line" points="30,32 22,46 16,52"/>
+    <polyline class="ic-line" points="26,17 18,24"/>
+    <polyline class="ic-line" points="26,17 38,20"/>
+  `,
+};
+
+function iconSvg(key, nome, meta){
+  const n = (nome||'').replace(/'/g,"\\'");
+  const m = (meta||'').replace(/'/g,"\\'");
+  return `<div class="ex-icon" onclick="abrirIlustracao('${key}','${n}','${m}')"><svg viewBox="0 0 64 64" class="ex-icon-svg">${ICONS[key] || ''}</svg></div>`;
+}
+
+function abrirIlustracao(key, nome, meta){
+  document.getElementById("modalBox").innerHTML = `
+    <svg viewBox="0 0 64 64" class="ex-icon-svg">${ICONS[key] || ''}</svg>
+    <div class="modal-name">${nome}</div>
+    <div class="modal-meta">${meta}</div>
+  `;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+function fecharIlustracao(ev){
+  if(ev.target.id === "modalOverlay") document.getElementById("modalOverlay").classList.remove("open");
+}
 
 // ---------- Estado / persistência ----------
 function getISOWeekKey(d=new Date()){
@@ -323,6 +562,7 @@ function renderDia(){
         html += `
           <div class="ex-card ${on?'checked':''}">
             <div class="ex-check ${on?'on':''}" onclick="toggleExercicio('${dia.id}',${bi},${ei})">${on?'✓':''}</div>
+            ${iconSvg(ex.icon, ex.n, ex.m)}
             <div class="ex-body">
               <div class="ex-name">${ex.n}</div>
               <div class="ex-meta">${ex.m}</div>
@@ -337,6 +577,7 @@ function renderDia(){
         <div class="run-card">
           <div class="ex-card ${on?'checked':''}" style="border:none;padding:0;margin:0;background:transparent">
             <div class="ex-check ${on?'on':''}" onclick="toggleExercicio('${dia.id}',${bi},'corrida')">${on?'✓':''}</div>
+            ${iconSvg('run', bloco.corrida.tipo, bloco.corrida.detalhe)}
             <div class="ex-body">
               <div class="ex-name">${bloco.corrida.tipo}</div>
               <div class="ex-meta">${bloco.corrida.detalhe}</div>
