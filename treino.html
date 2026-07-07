@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Treino — Academia + Corrida</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeede9;
+  --txt:#1a1a1a;--txt2:#6b6b6b;--txt3:#9b9b9b;
+  --border:#e0e0dc;--border2:#c8c8c4;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-txt:#0C447C;
+  --green:#0F6E56;--green-bg:#E1F5EE;--green-txt:#085041;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-txt:#854F0B;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-txt:#791F1F;
+  --purple:#5B3E9E;--purple-bg:#EFEAFB;--purple-txt:#402A73;
+  --radius:8px;--radius-lg:12px;
+}
+body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--txt);min-height:100vh;padding-bottom:40px}
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:10}
+.topbar-logo{font-size:13px;font-weight:600;letter-spacing:0.02em}
+.topbar-logo span{color:var(--txt2);font-weight:400}
+.content{max-width:760px;margin:0 auto;padding:1.25rem 1.25rem 0}
+
+.week-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+@media(max-width:480px){.week-summary{grid-template-columns:repeat(2,1fr)}}
+.sum-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.sum-num{font-size:20px;font-weight:600}
+.sum-label{font-size:11px;color:var(--txt2);margin-top:2px}
+
+.tabs{display:flex;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:4px;gap:2px;overflow-x:auto;margin-bottom:1rem}
+.tab{padding:9px 12px;cursor:pointer;font-size:12px;font-weight:500;color:var(--txt2);white-space:nowrap;user-select:none;border-radius:var(--radius);text-align:center;flex:1;position:relative}
+.tab.active{color:#fff;background:var(--txt)}
+.tab .tag{display:block;font-size:9px;margin-top:2px;opacity:0.7}
+.tab.done::after{content:"✓";position:absolute;top:2px;right:4px;font-size:9px;color:var(--green)}
+.tab.active.done::after{color:#9ee8cf}
+
+.day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.day-title{font-size:17px;font-weight:600}
+.day-sub{font-size:12px;color:var(--txt2);margin-top:2px}
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.02em}
+.badge-blue{background:var(--blue-bg);color:var(--blue-txt)}
+.badge-green{background:var(--green-bg);color:var(--green-txt)}
+.badge-purple{background:var(--purple-bg);color:var(--purple-txt)}
+.badge-amber{background:var(--amber-bg);color:var(--amber-txt)}
+
+.progress-bar{height:6px;background:var(--bg2);border-radius:6px;overflow:hidden;margin-bottom:14px}
+.progress-fill{height:100%;background:var(--green);transition:width .2s}
+
+.block{margin-bottom:16px}
+.block-title{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+
+.ex-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:opacity .15s,background .15s}
+.ex-card.checked{background:var(--green-bg);border-color:var(--green)}
+.ex-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;transition:all .15s;user-select:none}
+.ex-check.on{background:var(--green);border-color:var(--green)}
+.ex-body{flex:1;min-width:0}
+.ex-name{font-weight:600;font-size:13px}
+.ex-meta{font-size:11.5px;color:var(--txt2);margin-top:2px}
+.ex-card.checked .ex-name{text-decoration:line-through;color:var(--txt2)}
+
+.run-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:8px}
+.run-card .ex-meta{margin-top:6px;line-height:1.5}
+
+.rest-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;text-align:center;margin-top:10px}
+.rest-time{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;margin:6px 0}
+.rest-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.btn-sec{background:var(--bg);color:var(--txt);border:0.5px solid var(--border2);border-radius:var(--radius);padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:background 0.1s}
+.btn-sec:hover{background:var(--bg2)}
+.btn-sec.active-timer{background:var(--txt);color:#fff;border-color:var(--txt)}
+
+.rest-day{text-align:center;padding:3rem 1rem;color:var(--txt2)}
+.rest-day-icon{font-size:34px;margin-bottom:10px}
+
+.reset-row{text-align:center;margin-top:22px}
+.link-btn{background:none;border:none;color:var(--txt3);font-size:11px;cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Meu Treino <span>— Academia + Corrida</span></div>
+  <div class="topbar-logo" id="semanaLabel" style="font-weight:400;color:var(--txt2)"></div>
+</div>
+
+<div class="content">
+
+  <div class="week-summary">
+    <div class="sum-card"><div class="sum-num" id="sumAcademia">0/5</div><div class="sum-label">Academia</div></div>
+    <div class="sum-card"><div class="sum-num" id="sumCorrida">0/4</div><div class="sum-label">Corrida</div></div>
+    <div class="sum-card"><div class="sum-num" id="sumExercicios">0/0</div><div class="sum-label">Exercícios</div></div>
+    <div class="sum-card"><div class="sum-num" id="sumStreak">0</div><div class="sum-label">Dias em dia</div></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div id="dayView"></div>
+
+  <div class="reset-row">
+    <button class="link-btn" onclick="resetarSemana()">Reiniciar progresso desta semana</button>
+  </div>
+</div>
+
+<script>
+// ---------- Plano semanal ----------
+// 5x academia (força + pernas em foco), 4x corrida.
+// Terça e Quarta combinam academia + corrida leve no mesmo dia.
+const PLANO = [
+  { id:"seg", nome:"Segunda", tipo:["academia"], titulo:"Pernas A — Quadríceps / Força",
+    blocos:[
+      { titulo:"Musculação", exercicios:[
+        {n:"Agachamento livre", m:"4x6-8, carga alta"},
+        {n:"Leg press 45°", m:"4x10"},
+        {n:"Cadeira extensora", m:"3x12"},
+        {n:"Afundo (passada)", m:"3x10 cada perna"},
+        {n:"Panturrilha em pé", m:"4x15"},
+      ]}
+    ]},
+  { id:"ter", nome:"Terça", tipo:["academia","corrida"], titulo:"Superior Empurrar (Push) + Corrida leve",
+    blocos:[
+      { titulo:"Musculação", exercicios:[
+        {n:"Supino reto", m:"4x8"},
+        {n:"Desenvolvimento militar", m:"3x10"},
+        {n:"Tríceps corda", m:"3x12"},
+        {n:"Elevação lateral", m:"3x15"},
+      ]},
+      { titulo:"Corrida", corrida:{tipo:"Regenerativa / leve", detalhe:"30 min em ritmo de conversa (consegue falar frases inteiras). Objetivo: recuperação ativa, não desgastar as pernas para o treino de quinta."} }
+    ]},
+  { id:"qua", nome:"Quarta", tipo:["corrida"], titulo:"Corrida — Intervalado (Tiros)",
+    blocos:[
+      { titulo:"Corrida", corrida:{tipo:"Intervalado / velocidade", detalhe:"Aquecimento: 10 min trote leve. Principal: 6x400m em ritmo forte com 2 min de trote entre os tiros. Desaquecimento: 10 min trote leve + alongamento."} }
+    ]},
+  { id:"qui", nome:"Quinta", tipo:["academia"], titulo:"Pernas B — Posterior / Glúteos",
+    blocos:[
+      { titulo:"Musculação", exercicios:[
+        {n:"Levantamento terra romeno", m:"4x8"},
+        {n:"Cadeira flexora", m:"3x12"},
+        {n:"Elevação pélvica (hip thrust)", m:"4x10"},
+        {n:"Stiff unilateral", m:"3x10 cada perna"},
+        {n:"Panturrilha sentado", m:"4x15"},
+      ]}
+    ]},
+  { id:"sex", nome:"Sexta", tipo:["academia"], titulo:"Superior Puxar (Pull) + Core",
+    blocos:[
+      { titulo:"Musculação", exercicios:[
+        {n:"Puxada frente", m:"4x8"},
+        {n:"Remada curvada", m:"4x10"},
+        {n:"Rosca direta", m:"3x12"},
+        {n:"Prancha", m:"3x45s"},
+        {n:"Abdominal infra", m:"3x15"},
+      ]}
+    ]},
+  { id:"sab", nome:"Sábado", tipo:["academia","corrida"], titulo:"Full Body Funcional + Corrida leve",
+    blocos:[
+      { titulo:"Musculação (circuito, 3 voltas)", exercicios:[
+        {n:"Kettlebell swing", m:"15 reps"},
+        {n:"Burpee", m:"12 reps"},
+        {n:"Mountain climber", m:"20 reps"},
+        {n:"Prancha lateral", m:"30s cada lado"},
+      ]},
+      { titulo:"Corrida", corrida:{tipo:"Leve / moderada", detalhe:"25-30 min em ritmo moderado, sem forçar. Serve de complemento ao circuito funcional."} }
+    ]},
+  { id:"dom", nome:"Domingo", tipo:["corrida"], titulo:"Corrida Longa",
+    blocos:[
+      { titulo:"Corrida", corrida:{tipo:"Longão", detalhe:"50-70 min em ritmo confortável e constante. Foco em resistência aeróbica, não em velocidade. Hidrate-se bem antes."} }
+    ]},
+];
+
+// ---------- Estado / persistência ----------
+function getISOWeekKey(d=new Date()){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+  return `${date.getUTCFullYear()}-W${weekNo}`;
+}
+
+const STORAGE_KEY = "treino_progresso";
+function carregarProgresso(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch(e){ return {}; }
+}
+function salvarProgresso(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+
+let progresso = carregarProgresso();
+const semanaAtual = getISOWeekKey();
+if(!progresso[semanaAtual]) progresso[semanaAtual] = {};
+document.getElementById("semanaLabel").textContent = "Semana " + semanaAtual.split("-W")[1] + "/" + semanaAtual.split("-W")[0];
+
+function chaveExercicio(diaId, blocoIdx, exIdx){ return `${diaId}_${blocoIdx}_${exIdx}`; }
+
+let diaSelecionado = (() => {
+  const hojeIdx = (new Date().getDay() + 6) % 7; // 0=segunda
+  return PLANO[hojeIdx].id;
+})();
+
+// ---------- Timer de descanso ----------
+let timerInterval = null;
+let timerSegundos = 90;
+let timerRestante = 90;
+
+function renderTimer(){
+  return `
+    <div class="rest-box">
+      <div class="block-title">⏱ Cronômetro de descanso</div>
+      <div class="rest-time" id="restTime">${formatTime(timerRestante)}</div>
+      <div class="rest-actions">
+        <button class="btn-sec" onclick="ajustarTimer(60)">60s</button>
+        <button class="btn-sec" onclick="ajustarTimer(90)">90s</button>
+        <button class="btn-sec" onclick="ajustarTimer(120)">120s</button>
+        <button class="btn-sec" id="btnStartTimer" onclick="toggleTimer()">Iniciar</button>
+        <button class="btn-sec" onclick="resetarTimer()">Zerar</button>
+      </div>
+    </div>`;
+}
+function formatTime(s){
+  const m = Math.floor(s/60).toString().padStart(2,"0");
+  const sec = (s%60).toString().padStart(2,"0");
+  return `${m}:${sec}`;
+}
+function ajustarTimer(v){
+  clearInterval(timerInterval); timerInterval=null;
+  timerSegundos = v; timerRestante = v;
+  const el = document.getElementById("restTime"); if(el) el.textContent = formatTime(timerRestante);
+  const btn = document.getElementById("btnStartTimer"); if(btn){ btn.textContent="Iniciar"; btn.classList.remove("active-timer"); }
+}
+function resetarTimer(){ ajustarTimer(timerSegundos); }
+function toggleTimer(){
+  const btn = document.getElementById("btnStartTimer");
+  if(timerInterval){
+    clearInterval(timerInterval); timerInterval=null;
+    btn.textContent="Iniciar"; btn.classList.remove("active-timer");
+    return;
+  }
+  btn.textContent="Pausar"; btn.classList.add("active-timer");
+  timerInterval = setInterval(() => {
+    timerRestante--;
+    const el = document.getElementById("restTime");
+    if(el) el.textContent = formatTime(timerRestante);
+    if(timerRestante <= 0){
+      clearInterval(timerInterval); timerInterval=null;
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      const b = document.getElementById("btnStartTimer");
+      if(b){ b.textContent="Iniciar"; b.classList.remove("active-timer"); }
+      timerRestante = timerSegundos;
+    }
+  }, 1000);
+}
+
+// ---------- Render ----------
+function badgeTipo(tipo){
+  if(tipo.includes("academia") && tipo.includes("corrida")) return `<span class="badge badge-purple">Academia + Corrida</span>`;
+  if(tipo.includes("academia")) return `<span class="badge badge-blue">Academia</span>`;
+  return `<span class="badge badge-green">Corrida</span>`;
+}
+
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = PLANO.map(dia => {
+    const completo = diaCompleto(dia);
+    return `<div class="tab ${dia.id===diaSelecionado?'active':''} ${completo?'done':''}" onclick="selecionarDia('${dia.id}')">
+      ${dia.nome}<span class="tag">${dia.tipo.includes('academia')&&dia.tipo.includes('corrida')?'🏋️🏃':dia.tipo.includes('academia')?'🏋️':'🏃'}</span>
+    </div>`;
+  }).join("");
+}
+
+function totalExerciciosDia(dia){
+  return dia.blocos.reduce((acc,b) => acc + (b.exercicios ? b.exercicios.length : 0) + (b.corrida?1:0), 0);
+}
+function feitosExerciciosDia(dia){
+  const p = progresso[semanaAtual][dia.id] || {};
+  let count = 0;
+  dia.blocos.forEach((b, bi) => {
+    if(b.exercicios) b.exercicios.forEach((_, ei) => { if(p[chaveExercicio(dia.id,bi,ei)]) count++; });
+    if(b.corrida) if(p[chaveExercicio(dia.id,bi,'corrida')]) count++;
+  });
+  return count;
+}
+function diaCompleto(dia){
+  const total = totalExerciciosDia(dia);
+  return total>0 && feitosExerciciosDia(dia)===total;
+}
+
+function selecionarDia(id){
+  diaSelecionado = id;
+  renderTudo();
+}
+
+function toggleExercicio(diaId, blocoIdx, exIdx){
+  const p = progresso[semanaAtual];
+  if(!p[diaId]) p[diaId] = {};
+  const k = chaveExercicio(diaId, blocoIdx, exIdx);
+  p[diaId][k] = !p[diaId][k];
+  salvarProgresso(progresso);
+  renderTudo();
+}
+
+function renderDia(){
+  const dia = PLANO.find(d => d.id === diaSelecionado);
+  const p = progresso[semanaAtual][dia.id] || {};
+  const total = totalExerciciosDia(dia);
+  const feitos = feitosExerciciosDia(dia);
+  const pct = total ? Math.round((feitos/total)*100) : 0;
+
+  let html = `
+    <div class="day-header">
+      <div>
+        <div class="day-title">${dia.titulo}</div>
+        <div class="day-sub">${dia.nome} · ${feitos}/${total} concluído${total===1?'':'s'}</div>
+      </div>
+      ${badgeTipo(dia.tipo)}
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+  `;
+
+  dia.blocos.forEach((bloco, bi) => {
+    html += `<div class="block"><div class="block-title">${bloco.titulo}</div>`;
+    if(bloco.exercicios){
+      bloco.exercicios.forEach((ex, ei) => {
+        const k = chaveExercicio(dia.id, bi, ei);
+        const on = !!p[k];
+        html += `
+          <div class="ex-card ${on?'checked':''}">
+            <div class="ex-check ${on?'on':''}" onclick="toggleExercicio('${dia.id}',${bi},${ei})">${on?'✓':''}</div>
+            <div class="ex-body">
+              <div class="ex-name">${ex.n}</div>
+              <div class="ex-meta">${ex.m}</div>
+            </div>
+          </div>`;
+      });
+    }
+    if(bloco.corrida){
+      const k = chaveExercicio(dia.id, bi, 'corrida');
+      const on = !!p[k];
+      html += `
+        <div class="run-card">
+          <div class="ex-card ${on?'checked':''}" style="border:none;padding:0;margin:0;background:transparent">
+            <div class="ex-check ${on?'on':''}" onclick="toggleExercicio('${dia.id}',${bi},'corrida')">${on?'✓':''}</div>
+            <div class="ex-body">
+              <div class="ex-name">${bloco.corrida.tipo}</div>
+              <div class="ex-meta">${bloco.corrida.detalhe}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+  });
+
+  if(dia.tipo.includes("academia")){
+    html += renderTimer();
+  }
+
+  document.getElementById("dayView").innerHTML = html;
+}
+
+function renderResumo(){
+  let academiaFeitos = 0, corridaFeitos = 0, exTotal = 0, exFeitos = 0;
+  PLANO.forEach(dia => {
+    const completo = diaCompleto(dia);
+    if(dia.tipo.includes("academia") && completo) academiaFeitos++;
+    if(dia.tipo.includes("corrida") && completo) corridaFeitos++;
+    exTotal += totalExerciciosDia(dia);
+    exFeitos += feitosExerciciosDia(dia);
+  });
+  document.getElementById("sumAcademia").textContent = `${academiaFeitos}/5`;
+  document.getElementById("sumCorrida").textContent = `${corridaFeitos}/4`;
+  document.getElementById("sumExercicios").textContent = `${exFeitos}/${exTotal}`;
+  document.getElementById("sumStreak").textContent = PLANO.filter(diaCompleto).length;
+}
+
+function renderTudo(){
+  renderTabs();
+  renderDia();
+  renderResumo();
+}
+
+function resetarSemana(){
+  if(!confirm("Reiniciar todo o progresso desta semana?")) return;
+  progresso[semanaAtual] = {};
+  salvarProgresso(progresso);
+  renderTudo();
+}
+
+renderTudo();
+</script>
+</body>
+</html>
