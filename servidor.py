@@ -86,6 +86,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in ("/", "/index.html"):
             self.serve_file("app.html", "text/html")
+        elif self.path in ("/treino", "/treino.html"):
+            self.serve_file("treino.html", "text/html")
         elif self.path == "/api/dados":
             self.send_json(carregar_dados())
         elif self.path.startswith("/api/poll"):
