@@ -15,6 +15,8 @@
   --amber:#BA7517;--amber-bg:#FAEEDA;--amber-txt:#854F0B;
   --red:#A32D2D;--red-bg:#FCEBEB;--red-txt:#791F1F;
   --purple:#5B3E9E;--purple-bg:#EFEAFB;--purple-txt:#402A73;
+  --chart-blue:#185FA5;--chart-aqua:#0f9d6b;
+  --seq-100:#cde2fb;--seq-300:#6da7ec;--seq-450:#2a78d6;--seq-600:#184f95;
   --radius:8px;--radius-lg:12px;
 }
 body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--txt);min-height:100vh;padding-bottom:40px}
@@ -28,6 +30,37 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .sum-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
 .sum-num{font-size:20px;font-weight:600}
 .sum-label{font-size:11px;color:var(--txt2);margin-top:2px}
+
+.view-toggle{display:flex;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:4px;gap:2px;margin-bottom:1rem}
+.view-btn{flex:1;text-align:center;padding:9px 12px;font-size:12.5px;font-weight:600;color:var(--txt2);border-radius:var(--radius);cursor:pointer;user-select:none}
+.view-btn.active{background:var(--txt);color:#fff}
+
+.dash-section{margin-bottom:20px}
+.dash-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.dash-sub{font-size:11.5px;color:var(--txt2);margin-bottom:10px}
+.dash-empty{text-align:center;padding:2rem 1rem;color:var(--txt2);font-size:12.5px}
+
+.chart-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 14px 12px}
+.chart-legend{display:flex;gap:16px;margin-bottom:14px;font-size:11.5px;color:var(--txt2)}
+.legend-dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+.bars-row{display:flex;align-items:flex-end;gap:10px;height:110px;border-bottom:1px solid var(--border2);padding:0 2px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:pointer;min-width:0}
+.bar-group{display:flex;align-items:flex-end;gap:2px;height:100%;width:100%;justify-content:center}
+.bar-subcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bar{width:100%;max-width:22px;border-radius:4px 4px 0 0;background:var(--chart-blue);min-height:2px}
+.bar.aqua{background:var(--chart-aqua)}
+.bar-col:active .bar{opacity:0.75}
+.bar-value{font-size:9.5px;color:var(--txt2);margin-bottom:3px;white-space:nowrap;font-weight:600}
+.bar-axis{display:flex;gap:10px;padding:0 2px;margin-top:6px}
+.bar-axis-label{flex:1;text-align:center;font-size:10px;color:var(--txt2);white-space:nowrap;min-width:0}
+.bar-axis-label.current{color:var(--txt);font-weight:700}
+
+.heat-wrap{overflow-x:auto}
+.heat-grid{display:inline-grid;grid-auto-rows:22px;gap:3px;margin-top:4px}
+.heat-cell{width:22px;height:22px;border-radius:4px;background:var(--bg2);cursor:pointer}
+.heat-row-label{font-size:10px;color:var(--txt2);display:flex;align-items:center;padding-right:6px}
+.heat-col-label{font-size:9.5px;color:var(--txt2);text-align:center}
 
 .tabs{display:flex;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:4px;gap:2px;overflow-x:auto;margin-bottom:1rem}
 .tab{padding:9px 12px;cursor:pointer;font-size:12px;font-weight:500;color:var(--txt2);white-space:nowrap;user-select:none;border-radius:var(--radius);text-align:center;flex:1;position:relative}
@@ -110,13 +143,22 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
     <div class="sum-card"><div class="sum-num" id="sumStreak">0</div><div class="sum-label">Dias em dia</div></div>
   </div>
 
-  <div class="tabs" id="tabs"></div>
-
-  <div id="dayView"></div>
-
-  <div class="reset-row">
-    <button class="link-btn" onclick="resetarSemana()">Reiniciar progresso desta semana</button>
+  <div class="view-toggle">
+    <div class="view-btn active" id="viewBtnSemana" onclick="selecionarView('semana')">Meu treino</div>
+    <div class="view-btn" id="viewBtnDashboard" onclick="selecionarView('dashboard')">Dashboard</div>
   </div>
+
+  <div id="semanaView">
+    <div class="tabs" id="tabs"></div>
+
+    <div id="dayView"></div>
+
+    <div class="reset-row">
+      <button class="link-btn" onclick="resetarSemana()">Reiniciar progresso desta semana</button>
+    </div>
+  </div>
+
+  <div id="dashboardView" style="display:none"></div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="fecharIlustracao(event)">
@@ -507,8 +549,8 @@ function renderTabs(){
 function totalExerciciosDia(dia){
   return dia.blocos.reduce((acc,b) => acc + (b.exercicios ? b.exercicios.length : 0) + (b.corrida?1:0), 0);
 }
-function feitosExerciciosDia(dia){
-  const p = progresso[semanaAtual][dia.id] || {};
+function feitosExerciciosDia(dia, weekKey=semanaAtual){
+  const p = (progresso[weekKey] && progresso[weekKey][dia.id]) || {};
   let count = 0;
   dia.blocos.forEach((b, bi) => {
     if(b.exercicios) b.exercicios.forEach((_, ei) => { if(p[chaveExercicio(dia.id,bi,ei)]) count++; });
@@ -516,9 +558,9 @@ function feitosExerciciosDia(dia){
   });
   return count;
 }
-function diaCompleto(dia){
+function diaCompleto(dia, weekKey=semanaAtual){
   const total = totalExerciciosDia(dia);
-  return total>0 && feitosExerciciosDia(dia)===total;
+  return total>0 && feitosExerciciosDia(dia, weekKey)===total;
 }
 
 function selecionarDia(id){
@@ -614,6 +656,7 @@ function renderTudo(){
   renderTabs();
   renderDia();
   renderResumo();
+  if(viewMode === "dashboard") renderDashboard();
 }
 
 function resetarSemana(){
@@ -621,6 +664,202 @@ function resetarSemana(){
   progresso[semanaAtual] = {};
   salvarProgresso(progresso);
   renderTudo();
+}
+
+// ---------- Dashboard ----------
+let viewMode = "semana";
+
+function selecionarView(v){
+  viewMode = v;
+  document.getElementById("viewBtnSemana").classList.toggle("active", v === "semana");
+  document.getElementById("viewBtnDashboard").classList.toggle("active", v === "dashboard");
+  document.getElementById("semanaView").style.display = v === "semana" ? "" : "none";
+  document.getElementById("dashboardView").style.display = v === "dashboard" ? "" : "none";
+  if(v === "dashboard") renderDashboard();
+}
+
+function compareWeekKeys(a, b){
+  const [ay, aw] = a.split("-W").map(Number);
+  const [by, bw] = b.split("-W").map(Number);
+  return ay - by || aw - bw;
+}
+function allWeekKeysOrdenadas(){
+  return Object.keys(progresso).sort(compareWeekKeys);
+}
+function mondayOfISOWeek(weekKey){
+  const [yearStr, weekStr] = weekKey.split("-W");
+  const year = Number(yearStr), week = Number(weekStr);
+  const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+  const dow = simple.getUTCDay() || 7;
+  simple.setUTCDate(simple.getUTCDate() - dow + 1);
+  return simple;
+}
+const MESES_ABREV = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+function weekLabel(weekKey){ return "S" + weekKey.split("-W")[1]; }
+function monthKeyFromWeek(weekKey){
+  const d = mondayOfISOWeek(weekKey);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+function monthLabel(monthKey){
+  const [y, m] = monthKey.split("-").map(Number);
+  return `${MESES_ABREV[m - 1]}/${String(y).slice(2)}`;
+}
+function formatDataCurta(d){
+  return `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}`;
+}
+
+function statsForWeek(weekKey){
+  let academia = 0, corrida = 0, diasCompletos = 0, exFeitos = 0, exTotal = 0;
+  PLANO.forEach(dia => {
+    const completo = diaCompleto(dia, weekKey);
+    if(completo) diasCompletos++;
+    if(dia.tipo.includes("academia") && completo) academia++;
+    if(dia.tipo.includes("corrida") && completo) corrida++;
+    exTotal += totalExerciciosDia(dia);
+    exFeitos += feitosExerciciosDia(dia, weekKey);
+  });
+  return {
+    weekKey, academia, corrida, diasCompletos, exFeitos, exTotal,
+    pctDias: Math.round((diasCompletos / 7) * 100),
+  };
+}
+
+function corSequencial(pct){
+  if(pct <= 0) return "var(--bg2)";
+  if(pct < 50) return "var(--seq-100)";
+  if(pct < 100) return "var(--seq-450)";
+  return "var(--seq-600)";
+}
+
+function abrirDetalheSemana(weekKey){
+  const s = statsForWeek(weekKey);
+  const monday = mondayOfISOWeek(weekKey);
+  const sunday = new Date(monday); sunday.setUTCDate(sunday.getUTCDate() + 6);
+  document.getElementById("modalBox").innerHTML = `
+    <div class="modal-name">Semana ${weekKey.split("-W")[1]}</div>
+    <div class="modal-meta">${formatDataCurta(monday)} – ${formatDataCurta(sunday)}</div>
+    <div style="text-align:left;margin-top:14px;font-size:12.5px;line-height:2">
+      <div>🏋️ Academia: <strong>${s.academia}/5</strong> dias</div>
+      <div>🏃 Corrida: <strong>${s.corrida}/4</strong> dias</div>
+      <div>✅ Exercícios: <strong>${s.exFeitos}/${s.exTotal}</strong></div>
+    </div>
+  `;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function abrirDetalheCelula(weekKey, diaId){
+  const dia = PLANO.find(d => d.id === diaId);
+  const feitos = feitosExerciciosDia(dia, weekKey);
+  const total = totalExerciciosDia(dia);
+  document.getElementById("modalBox").innerHTML = `
+    <div class="modal-name">${dia.nome} — Semana ${weekKey.split("-W")[1]}</div>
+    <div class="modal-meta">${dia.titulo}</div>
+    <div style="margin-top:10px;font-size:13px"><strong>${feitos}/${total}</strong> exercícios concluídos</div>
+  `;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function abrirDetalheMes(monthKey){
+  const weeksDoMes = allWeekKeysOrdenadas().filter(wk => monthKeyFromWeek(wk) === monthKey);
+  let academia = 0, corrida = 0, exFeitos = 0, exTotal = 0;
+  weeksDoMes.forEach(wk => {
+    const s = statsForWeek(wk);
+    academia += s.academia; corrida += s.corrida; exFeitos += s.exFeitos; exTotal += s.exTotal;
+  });
+  document.getElementById("modalBox").innerHTML = `
+    <div class="modal-name">${monthLabel(monthKey)}</div>
+    <div class="modal-meta">${weeksDoMes.length} semana${weeksDoMes.length === 1 ? "" : "s"} registrada${weeksDoMes.length === 1 ? "" : "s"}</div>
+    <div style="text-align:left;margin-top:14px;font-size:12.5px;line-height:2">
+      <div>🏋️ Academia: <strong>${academia}</strong> / ${weeksDoMes.length * 5} dias possíveis</div>
+      <div>🏃 Corrida: <strong>${corrida}</strong> / ${weeksDoMes.length * 4} dias possíveis</div>
+      <div>✅ Exercícios: <strong>${exFeitos}/${exTotal}</strong></div>
+    </div>
+  `;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function renderDashboard(){
+  const el = document.getElementById("dashboardView");
+  const semanas = allWeekKeysOrdenadas();
+  if(semanas.length === 0){
+    el.innerHTML = `<div class="dash-empty">Ainda sem histórico. Marque alguns exercícios na aba "Meu treino" pra começar a ver seus resultados aqui.</div>`;
+    return;
+  }
+
+  const ultimasSemanas = semanas.slice(-8);
+  const barsSemanasHtml = ultimasSemanas.map(wk => {
+    const s = statsForWeek(wk);
+    return `<div class="bar-col" onclick="abrirDetalheSemana('${wk}')">
+      <div class="bar-value">${s.pctDias}%</div>
+      <div class="bar" style="height:${Math.max(s.pctDias, 3)}%"></div>
+    </div>`;
+  }).join("");
+  const axisSemanasHtml = ultimasSemanas.map(wk =>
+    `<div class="bar-axis-label ${wk === semanaAtual ? "current" : ""}">${weekLabel(wk)}</div>`
+  ).join("");
+
+  const meses = [...new Set(semanas.map(monthKeyFromWeek))].sort();
+  const ultimosMeses = meses.slice(-6);
+  const barsMesesHtml = ultimosMeses.map(mk => {
+    const weeksDoMes = semanas.filter(wk => monthKeyFromWeek(wk) === mk);
+    let academia = 0, corrida = 0;
+    weeksDoMes.forEach(wk => { const s = statsForWeek(wk); academia += s.academia; corrida += s.corrida; });
+    const pctAcademia = Math.round((academia / (weeksDoMes.length * 5)) * 100);
+    const pctCorrida = Math.round((corrida / (weeksDoMes.length * 4)) * 100);
+    return `<div class="bar-col" onclick="abrirDetalheMes('${mk}')">
+      <div class="bar-group">
+        <div class="bar-subcol"><div class="bar-value">${pctAcademia}%</div><div class="bar" style="height:${Math.max(pctAcademia, 3)}%"></div></div>
+        <div class="bar-subcol"><div class="bar-value">${pctCorrida}%</div><div class="bar aqua" style="height:${Math.max(pctCorrida, 3)}%"></div></div>
+      </div>
+    </div>`;
+  }).join("");
+  const axisMesesHtml = ultimosMeses.map(mk => `<div class="bar-axis-label">${monthLabel(mk)}</div>`).join("");
+
+  const ultimasSemanasHeat = semanas.slice(-8);
+  const diasAbrev = ["Sg","Te","Qa","Qi","Sx","Sb","Do"];
+  const headerCells = `<div class="heat-row-label"></div>` + diasAbrev.map(d => `<div class="heat-col-label">${d}</div>`).join("");
+  const heatRows = ultimasSemanasHeat.map(wk => {
+    const rowLabel = `<div class="heat-row-label">${weekLabel(wk)}</div>`;
+    const cells = PLANO.map(dia => {
+      const total = totalExerciciosDia(dia);
+      const feitos = feitosExerciciosDia(dia, wk);
+      const pct = total ? Math.round((feitos / total) * 100) : 0;
+      return `<div class="heat-cell" style="background:${corSequencial(pct)}" onclick="abrirDetalheCelula('${wk}','${dia.id}')"></div>`;
+    }).join("");
+    return rowLabel + cells;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="dash-section">
+      <div class="dash-title">Últimas semanas</div>
+      <div class="dash-sub">% de dias do plano concluídos por semana — toque numa barra pra ver detalhes</div>
+      <div class="chart-box">
+        <div class="bars-row">${barsSemanasHtml}</div>
+        <div class="bar-axis">${axisSemanasHtml}</div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">Resultados por mês</div>
+      <div class="dash-sub">% de dias concluídos, academia vs. corrida — toque numa barra pra ver detalhes</div>
+      <div class="chart-box">
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--chart-blue)"></span>Academia</span>
+          <span><span class="legend-dot" style="background:var(--chart-aqua)"></span>Corrida</span>
+        </div>
+        <div class="bars-row">${barsMesesHtml}</div>
+        <div class="bar-axis">${axisMesesHtml}</div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-title">Visão geral</div>
+      <div class="dash-sub">Intensidade de conclusão por dia — toque numa célula pra ver detalhes</div>
+      <div class="chart-box heat-wrap">
+        <div class="heat-grid" style="grid-template-columns:44px repeat(7,22px)">${headerCells}${heatRows}</div>
+      </div>
+    </div>
+  `;
 }
 
 renderTudo();
