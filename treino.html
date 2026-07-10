@@ -62,6 +62,26 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .heat-row-label{font-size:10px;color:var(--txt2);display:flex;align-items:center;padding-right:6px}
 .heat-col-label{font-size:9.5px;color:var(--txt2);text-align:center}
 
+.edit-day{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden}
+.edit-day summary{padding:13px 15px;cursor:pointer;font-weight:600;font-size:13.5px;list-style:none;display:flex;align-items:baseline;gap:8px}
+.edit-day summary::-webkit-details-marker{display:none}
+.edit-day summary::before{content:"▸";color:var(--txt3);font-size:11px;transition:transform .15s}
+.edit-day[open] summary::before{transform:rotate(90deg)}
+.edit-day-sub{font-weight:400;color:var(--txt2);font-size:11.5px}
+.edit-day-body{padding:0 15px 15px}
+.edit-block-title{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:0.06em;margin:12px 0 8px}
+.edit-ex-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg2);border-radius:var(--radius);padding:8px}
+.edit-icon-select{font-size:10px;max-width:78px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:4px;background:var(--bg)}
+.edit-icon-preview{width:32px;height:32px;flex-shrink:0;background:var(--bg);border-radius:var(--radius);padding:4px;border:0.5px solid var(--border)}
+.edit-ex-fields{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.edit-ex-fields input{border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 8px;font-size:12.5px;background:var(--bg);color:var(--txt);width:100%}
+.edit-remove-btn{background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:4px 6px;flex-shrink:0}
+.edit-add-btn{margin-top:2px}
+.edit-corrida-row{background:var(--bg2);border-radius:var(--radius);padding:10px;margin-top:8px}
+.edit-corrida-row label{font-size:10.5px;color:var(--txt2);display:block;margin-bottom:3px;margin-top:8px}
+.edit-corrida-row label:first-child{margin-top:0}
+.edit-corrida-row input,.edit-corrida-row textarea{width:100%;border:0.5px solid var(--border2);border-radius:var(--radius);padding:7px 9px;font-size:12.5px;background:var(--bg);color:var(--txt);font-family:inherit;resize:vertical}
+
 .tabs{display:flex;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:4px;gap:2px;overflow-x:auto;margin-bottom:1rem}
 .tab{padding:9px 12px;cursor:pointer;font-size:12px;font-weight:500;color:var(--txt2);white-space:nowrap;user-select:none;border-radius:var(--radius);text-align:center;flex:1;position:relative}
 .tab.active{color:#fff;background:var(--txt)}
@@ -146,6 +166,7 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   <div class="view-toggle">
     <div class="view-btn active" id="viewBtnSemana" onclick="selecionarView('semana')">Meu treino</div>
     <div class="view-btn" id="viewBtnDashboard" onclick="selecionarView('dashboard')">Dashboard</div>
+    <div class="view-btn" id="viewBtnEditor" onclick="selecionarView('editor')">Editar</div>
   </div>
 
   <div id="semanaView">
@@ -159,6 +180,8 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   </div>
 
   <div id="dashboardView" style="display:none"></div>
+
+  <div id="editorView" style="display:none"></div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="fecharIlustracao(event)">
@@ -173,60 +196,60 @@ const PLANO = [
   { id:"seg", nome:"Segunda", tipo:["academia"], titulo:"Pernas A — Quadríceps / Força",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Agachamento livre", m:"4x6-8, carga alta", icon:"squat"},
-        {n:"Leg press 45°", m:"4x10", icon:"legpress"},
-        {n:"Cadeira extensora", m:"3x12", icon:"legext"},
-        {n:"Afundo (passada)", m:"3x10 cada perna", icon:"lunge"},
-        {n:"Panturrilha em pé", m:"4x15", icon:"calfstand"},
+        {id:"squat", n:"Agachamento livre", m:"4x6-8, carga alta", icon:"squat"},
+        {id:"legpress", n:"Leg press 45°", m:"4x10", icon:"legpress"},
+        {id:"legext", n:"Cadeira extensora", m:"3x12", icon:"legext"},
+        {id:"lunge", n:"Afundo (passada)", m:"3x10 cada perna", icon:"lunge"},
+        {id:"calfstand", n:"Panturrilha em pé", m:"4x15", icon:"calfstand"},
       ]}
     ]},
   { id:"ter", nome:"Terça", tipo:["academia","corrida"], titulo:"Superior Empurrar (Push) + Corrida leve",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Supino reto", m:"4x8", icon:"benchpress"},
-        {n:"Desenvolvimento militar", m:"3x10", icon:"ohp"},
-        {n:"Tríceps corda", m:"3x12", icon:"tricepspush"},
-        {n:"Elevação lateral", m:"3x15", icon:"lateralraise"},
+        {id:"benchpress", n:"Supino reto", m:"4x8", icon:"benchpress"},
+        {id:"ohp", n:"Desenvolvimento militar", m:"3x10", icon:"ohp"},
+        {id:"tricepspush", n:"Tríceps corda", m:"3x12", icon:"tricepspush"},
+        {id:"lateralraise", n:"Elevação lateral", m:"3x15", icon:"lateralraise"},
       ]},
-      { titulo:"Corrida", corrida:{tipo:"Regenerativa / leve", detalhe:"30 min em ritmo de conversa (consegue falar frases inteiras). Objetivo: recuperação ativa, não desgastar as pernas para o treino de quinta."} }
+      { titulo:"Corrida", corrida:{id:"corrida_ter", tipo:"Regenerativa / leve", detalhe:"30 min em ritmo de conversa (consegue falar frases inteiras). Objetivo: recuperação ativa, não desgastar as pernas para o treino de quinta."} }
     ]},
   { id:"qua", nome:"Quarta", tipo:["corrida"], titulo:"Corrida — Intervalado (Tiros)",
     blocos:[
-      { titulo:"Corrida", corrida:{tipo:"Intervalado / velocidade", detalhe:"Aquecimento: 10 min trote leve. Principal: 6x400m em ritmo forte com 2 min de trote entre os tiros. Desaquecimento: 10 min trote leve + alongamento."} }
+      { titulo:"Corrida", corrida:{id:"corrida_qua", tipo:"Intervalado / velocidade", detalhe:"Aquecimento: 10 min trote leve. Principal: 6x400m em ritmo forte com 2 min de trote entre os tiros. Desaquecimento: 10 min trote leve + alongamento."} }
     ]},
   { id:"qui", nome:"Quinta", tipo:["academia"], titulo:"Pernas B — Posterior / Glúteos",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Levantamento terra romeno", m:"4x8", icon:"rdl"},
-        {n:"Cadeira flexora", m:"3x12", icon:"legcurl"},
-        {n:"Elevação pélvica (hip thrust)", m:"4x10", icon:"hipthrust"},
-        {n:"Stiff unilateral", m:"3x10 cada perna", icon:"singlelegrdl"},
-        {n:"Panturrilha sentado", m:"4x15", icon:"calfseated"},
+        {id:"rdl", n:"Levantamento terra romeno", m:"4x8", icon:"rdl"},
+        {id:"legcurl", n:"Cadeira flexora", m:"3x12", icon:"legcurl"},
+        {id:"hipthrust", n:"Elevação pélvica (hip thrust)", m:"4x10", icon:"hipthrust"},
+        {id:"singlelegrdl", n:"Stiff unilateral", m:"3x10 cada perna", icon:"singlelegrdl"},
+        {id:"calfseated", n:"Panturrilha sentado", m:"4x15", icon:"calfseated"},
       ]}
     ]},
   { id:"sex", nome:"Sexta", tipo:["academia"], titulo:"Superior Puxar (Pull) + Core",
     blocos:[
       { titulo:"Musculação", exercicios:[
-        {n:"Puxada frente", m:"4x8", icon:"latpulldown"},
-        {n:"Remada curvada", m:"4x10", icon:"bentrow"},
-        {n:"Rosca direta", m:"3x12", icon:"bicepcurl"},
-        {n:"Prancha", m:"3x45s", icon:"plank"},
-        {n:"Abdominal infra", m:"3x15", icon:"legraise"},
+        {id:"latpulldown", n:"Puxada frente", m:"4x8", icon:"latpulldown"},
+        {id:"bentrow", n:"Remada curvada", m:"4x10", icon:"bentrow"},
+        {id:"bicepcurl", n:"Rosca direta", m:"3x12", icon:"bicepcurl"},
+        {id:"plank", n:"Prancha", m:"3x45s", icon:"plank"},
+        {id:"legraise", n:"Abdominal infra", m:"3x15", icon:"legraise"},
       ]}
     ]},
   { id:"sab", nome:"Sábado", tipo:["academia","corrida"], titulo:"Full Body Funcional + Corrida leve",
     blocos:[
       { titulo:"Musculação (circuito, 3 voltas)", exercicios:[
-        {n:"Kettlebell swing", m:"15 reps", icon:"kbswing"},
-        {n:"Burpee", m:"12 reps", icon:"burpee"},
-        {n:"Mountain climber", m:"20 reps", icon:"mountainclimber"},
-        {n:"Prancha lateral", m:"30s cada lado", icon:"sideplank"},
+        {id:"kbswing", n:"Kettlebell swing", m:"15 reps", icon:"kbswing"},
+        {id:"burpee", n:"Burpee", m:"12 reps", icon:"burpee"},
+        {id:"mountainclimber", n:"Mountain climber", m:"20 reps", icon:"mountainclimber"},
+        {id:"sideplank", n:"Prancha lateral", m:"30s cada lado", icon:"sideplank"},
       ]},
-      { titulo:"Corrida", corrida:{tipo:"Leve / moderada", detalhe:"25-30 min em ritmo moderado, sem forçar. Serve de complemento ao circuito funcional."} }
+      { titulo:"Corrida", corrida:{id:"corrida_sab", tipo:"Leve / moderada", detalhe:"25-30 min em ritmo moderado, sem forçar. Serve de complemento ao circuito funcional."} }
     ]},
   { id:"dom", nome:"Domingo", tipo:["corrida"], titulo:"Corrida Longa",
     blocos:[
-      { titulo:"Corrida", corrida:{tipo:"Longão", detalhe:"50-70 min em ritmo confortável e constante. Foco em resistência aeróbica, não em velocidade. Hidrate-se bem antes."} }
+      { titulo:"Corrida", corrida:{id:"corrida_dom", tipo:"Longão", detalhe:"50-70 min em ritmo confortável e constante. Foco em resistência aeróbica, não em velocidade. Hidrate-se bem antes."} }
     ]},
 ];
 
@@ -430,6 +453,17 @@ const ICONS = {
   `,
 };
 
+const ICON_LABELS = {
+  squat:"Agachamento", legpress:"Leg press", legext:"Cadeira extensora", lunge:"Afundo",
+  calfstand:"Panturrilha em pé", benchpress:"Supino", ohp:"Desenvolvimento (overhead)",
+  tricepspush:"Tríceps", lateralraise:"Elevação lateral", rdl:"Terra romeno",
+  legcurl:"Cadeira flexora", hipthrust:"Hip thrust", singlelegrdl:"Stiff unilateral",
+  calfseated:"Panturrilha sentado", latpulldown:"Puxada", bentrow:"Remada",
+  bicepcurl:"Rosca bíceps", plank:"Prancha", legraise:"Abdominal (elevação de pernas)",
+  kbswing:"Kettlebell swing", burpee:"Burpee", mountainclimber:"Mountain climber",
+  sideplank:"Prancha lateral",
+};
+
 function iconSvg(key, nome, meta){
   const n = (nome||'').replace(/'/g,"\\'");
   const m = (meta||'').replace(/'/g,"\\'");
@@ -470,6 +504,32 @@ if(!progresso[semanaAtual]) progresso[semanaAtual] = {};
 document.getElementById("semanaLabel").textContent = "Semana " + semanaAtual.split("-W")[1] + "/" + semanaAtual.split("-W")[0];
 
 function chaveExercicio(diaId, blocoIdx, exIdx){ return `${diaId}_${blocoIdx}_${exIdx}`; }
+
+// ---------- Edições do plano (nome, séries, ícone, novos exercícios, remoções) ----------
+const EDITS_KEY = "treino_plano_edits";
+function carregarEdits(){
+  try{
+    const e = JSON.parse(localStorage.getItem(EDITS_KEY)) || {};
+    return { overrides: e.overrides || {}, extras: e.extras || {} };
+  }catch(err){ return { overrides:{}, extras:{} }; }
+}
+function salvarEdits(){ localStorage.setItem(EDITS_KEY, JSON.stringify(edits)); }
+let edits = carregarEdits();
+
+function extrasKey(diaId, blocoIdx){ return `${diaId}__${blocoIdx}`; }
+function getExtras(diaId, blocoIdx){ return edits.extras[extrasKey(diaId, blocoIdx)] || []; }
+
+function efetivoExercicios(dia, blocoIdx, bloco){
+  const seed = bloco.exercicios.map(e => ({...e, ...(edits.overrides[e.id] || {})}));
+  const extras = getExtras(dia.id, blocoIdx).map(e => ({...e, ...(edits.overrides[e.id] || {})}));
+  return [...seed, ...extras];
+}
+function efetivoCorrida(bloco){
+  return {...bloco.corrida, ...(edits.overrides[bloco.corrida.id] || {})};
+}
+function escapeAttr(s){
+  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
 
 let diaSelecionado = (() => {
   const hojeIdx = (new Date().getDay() + 6) % 7; // 0=segunda
@@ -547,13 +607,23 @@ function renderTabs(){
 }
 
 function totalExerciciosDia(dia){
-  return dia.blocos.reduce((acc,b) => acc + (b.exercicios ? b.exercicios.length : 0) + (b.corrida?1:0), 0);
+  return dia.blocos.reduce((acc,b,bi) => {
+    let n = 0;
+    if(b.exercicios) n += efetivoExercicios(dia, bi, b).filter(e => !e.oculto).length;
+    if(b.corrida) n += 1;
+    return acc + n;
+  }, 0);
 }
 function feitosExerciciosDia(dia, weekKey=semanaAtual){
   const p = (progresso[weekKey] && progresso[weekKey][dia.id]) || {};
   let count = 0;
   dia.blocos.forEach((b, bi) => {
-    if(b.exercicios) b.exercicios.forEach((_, ei) => { if(p[chaveExercicio(dia.id,bi,ei)]) count++; });
+    if(b.exercicios){
+      efetivoExercicios(dia, bi, b).forEach((ex, ei) => {
+        if(ex.oculto) return;
+        if(p[chaveExercicio(dia.id,bi,ei)]) count++;
+      });
+    }
     if(b.corrida) if(p[chaveExercicio(dia.id,bi,'corrida')]) count++;
   });
   return count;
@@ -598,7 +668,8 @@ function renderDia(){
   dia.blocos.forEach((bloco, bi) => {
     html += `<div class="block"><div class="block-title">${bloco.titulo}</div>`;
     if(bloco.exercicios){
-      bloco.exercicios.forEach((ex, ei) => {
+      efetivoExercicios(dia, bi, bloco).forEach((ex, ei) => {
+        if(ex.oculto) return;
         const k = chaveExercicio(dia.id, bi, ei);
         const on = !!p[k];
         html += `
@@ -613,16 +684,17 @@ function renderDia(){
       });
     }
     if(bloco.corrida){
+      const corrida = efetivoCorrida(bloco);
       const k = chaveExercicio(dia.id, bi, 'corrida');
       const on = !!p[k];
       html += `
         <div class="run-card">
           <div class="ex-card ${on?'checked':''}" style="border:none;padding:0;margin:0;background:transparent">
             <div class="ex-check ${on?'on':''}" onclick="toggleExercicio('${dia.id}',${bi},'corrida')">${on?'✓':''}</div>
-            ${iconSvg('run', bloco.corrida.tipo, bloco.corrida.detalhe)}
+            ${iconSvg('run', corrida.tipo, corrida.detalhe)}
             <div class="ex-body">
-              <div class="ex-name">${bloco.corrida.tipo}</div>
-              <div class="ex-meta">${bloco.corrida.detalhe}</div>
+              <div class="ex-name">${corrida.tipo}</div>
+              <div class="ex-meta">${corrida.detalhe}</div>
             </div>
           </div>
         </div>`;
@@ -673,9 +745,12 @@ function selecionarView(v){
   viewMode = v;
   document.getElementById("viewBtnSemana").classList.toggle("active", v === "semana");
   document.getElementById("viewBtnDashboard").classList.toggle("active", v === "dashboard");
+  document.getElementById("viewBtnEditor").classList.toggle("active", v === "editor");
   document.getElementById("semanaView").style.display = v === "semana" ? "" : "none";
   document.getElementById("dashboardView").style.display = v === "dashboard" ? "" : "none";
+  document.getElementById("editorView").style.display = v === "editor" ? "" : "none";
   if(v === "dashboard") renderDashboard();
+  if(v === "editor") renderEditor();
 }
 
 function compareWeekKeys(a, b){
@@ -860,6 +935,86 @@ function renderDashboard(){
       </div>
     </div>
   `;
+}
+
+// ---------- Editor do plano ----------
+function iconOptionsHtml(selecionado){
+  return Object.keys(ICONS).filter(k => k !== "run").sort((a,b) => ICON_LABELS[a].localeCompare(ICON_LABELS[b])).map(k =>
+    `<option value="${k}" ${k===selecionado?"selected":""}>${ICON_LABELS[k]}</option>`
+  ).join("");
+}
+
+function renderEditor(){
+  const el = document.getElementById("editorView");
+  const abertos = new Set([...el.querySelectorAll(".edit-day[open]")].map(d => d.dataset.dia));
+  el.innerHTML = PLANO.map(dia => {
+    let blocosHtml = "";
+    dia.blocos.forEach((bloco, bi) => {
+      blocosHtml += `<div class="edit-block-title">${bloco.titulo}</div>`;
+      if(bloco.exercicios){
+        efetivoExercicios(dia, bi, bloco).forEach((ex, ei) => {
+          if(ex.oculto) return;
+          blocosHtml += `
+            <div class="edit-ex-row">
+              <div class="edit-icon-preview"><svg viewBox="0 0 64 64" class="ex-icon-svg" id="prev_${dia.id}_${bi}_${ei}">${ICONS[ex.icon] || ""}</svg></div>
+              <select class="edit-icon-select" onchange="editarExercicio('${ex.id}','icon',this.value); document.getElementById('prev_${dia.id}_${bi}_${ei}').innerHTML = ICONS[this.value] || '';">
+                ${iconOptionsHtml(ex.icon)}
+              </select>
+              <div class="edit-ex-fields">
+                <input type="text" value="${escapeAttr(ex.n)}" placeholder="Nome do exercício" oninput="editarExercicio('${ex.id}','n',this.value)">
+                <input type="text" value="${escapeAttr(ex.m)}" placeholder="Séries x repetições" oninput="editarExercicio('${ex.id}','m',this.value)">
+              </div>
+              <button class="edit-remove-btn" onclick="removerExercicio('${ex.id}')" title="Remover">✕</button>
+            </div>`;
+        });
+        blocosHtml += `<button class="btn-sec edit-add-btn" onclick="adicionarExercicio('${dia.id}',${bi})">+ Adicionar exercício</button>`;
+      }
+      if(bloco.corrida){
+        const c = efetivoCorrida(bloco);
+        blocosHtml += `
+          <div class="edit-corrida-row">
+            <label>Tipo de treino</label>
+            <input type="text" value="${escapeAttr(c.tipo)}" oninput="editarCorrida('${c.id}','tipo',this.value)">
+            <label>Detalhes</label>
+            <textarea rows="3" oninput="editarCorrida('${c.id}','detalhe',this.value)">${escapeAttr(c.detalhe)}</textarea>
+          </div>`;
+      }
+    });
+    return `
+      <details class="edit-day" data-dia="${dia.id}" ${abertos.has(dia.id) ? "open" : ""}>
+        <summary>${dia.nome} <span class="edit-day-sub">${dia.titulo}</span></summary>
+        <div class="edit-day-body">${blocosHtml}</div>
+      </details>`;
+  }).join("");
+}
+
+function editarExercicio(id, campo, valor){
+  if(!edits.overrides[id]) edits.overrides[id] = {};
+  edits.overrides[id][campo] = valor;
+  salvarEdits();
+}
+
+function removerExercicio(id){
+  if(!confirm("Remover este exercício do plano?")) return;
+  if(!edits.overrides[id]) edits.overrides[id] = {};
+  edits.overrides[id].oculto = true;
+  salvarEdits();
+  renderEditor();
+}
+
+function adicionarExercicio(diaId, blocoIdx){
+  const key = extrasKey(diaId, blocoIdx);
+  if(!edits.extras[key]) edits.extras[key] = [];
+  const novoId = "extra_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  edits.extras[key].push({ id: novoId, n: "Novo exercício", m: "3x10", icon: "plank" });
+  salvarEdits();
+  renderEditor();
+}
+
+function editarCorrida(id, campo, valor){
+  if(!edits.overrides[id]) edits.overrides[id] = {};
+  edits.overrides[id][campo] = valor;
+  salvarEdits();
 }
 
 renderTudo();
